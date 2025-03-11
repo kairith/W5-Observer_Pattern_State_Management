@@ -14,85 +14,84 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   int _currentIndex = 0;
 
-  ///
-  /// We use countModel to call it use automatic
-  ///
   @override
   Widget build(BuildContext context) {
-    return Consumer<CounterModel>(
-      builder: (BuildContext context, CounterModel value, Widget? child) {
-        // Test console Ex2
-        print("Color Count");
-        return Scaffold(
-          body: _currentIndex == 0 ? ColorTapsScreen() : StatisticsScreen(),
-          bottomNavigationBar: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.tap_and_play),
-                label: 'Taps',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.bar_chart),
-                label: 'Statistics',
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
+    print("Home Widget Rebuilt"); // Debugging
 
-class ColorTapsScreen extends StatefulWidget {
-  const ColorTapsScreen({super.key});
-  @override
-  ColorTapsScreenState createState() => ColorTapsScreenState();
-}
-
-class ColorTapsScreenState extends State<ColorTapsScreen> {
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Color Taps')),
-      body: Column(
-        children: [ColorTap(type: CardType.red), ColorTap(type: CardType.blue)],
+      appBar: AppBar(title: const Text("Color Tapper")),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: const [
+          ColorTapsScreen(),
+          StatisticsScreen(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.tap_and_play), label: 'Taps'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Statistics'),
+        ],
       ),
     );
   }
 }
 
+// ✅ Keeps this widget alive across tab switches
+class ColorTapsScreen extends StatefulWidget {
+  const ColorTapsScreen({super.key});
+
+  @override
+  State<ColorTapsScreen> createState() => _ColorTapsScreenState();
+}
+
+class _ColorTapsScreenState extends State<ColorTapsScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    print("ColorTapsScreen Built Once"); // Debugging
+
+    return const Column(
+      children: [ColorTap(type: CardType.red), ColorTap(type: CardType.blue)],
+    );
+  }
+}
+
+// This widget should ONLY rebuild when the specific counter updates
 class ColorTap extends StatelessWidget {
   final CardType type;
-
   const ColorTap({super.key, required this.type});
 
   Color get backgroundColor => type == CardType.red ? Colors.red : Colors.blue;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<CounterModel>(
-      builder: (context, count, child) {
-        // Check condition
-        final countTap =
-            type == CardType.red ? count.redCount : count.blueCount;
+    print(" ${type == CardType.red ? 'Red' : 'Blue'} Tap Widget Built Once");
+
+    return Selector<CounterModel, int>(
+      selector: (context, counterModel) => type == CardType.red ? counterModel.redCount : counterModel.blueCount,
+      builder: (context, countTap, child) {
+        print(" ${type == CardType.red ? 'Red' : 'Blue'} Counter Updated");
 
         return GestureDetector(
-          // On tap to increment the value
           onTap: () {
             if (type == CardType.red) {
-              count.incrementRed();
+              context.read<CounterModel>().incrementRed();
             } else {
-              count.incrementBlue();
+              context.read<CounterModel>().incrementBlue();
             }
           },
           child: Container(
-            margin: EdgeInsets.all(10),
+            margin: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: backgroundColor,
               borderRadius: BorderRadius.circular(10),
@@ -102,7 +101,7 @@ class ColorTap extends StatelessWidget {
             child: Center(
               child: Text(
                 'Taps: $countTap',
-                style: TextStyle(fontSize: 24, color: Colors.white),
+                style: const TextStyle(fontSize: 24, color: Colors.white),
               ),
             ),
           ),
@@ -112,31 +111,42 @@ class ColorTap extends StatelessWidget {
   }
 }
 
-class StatisticsScreen extends StatelessWidget {
+//  StatisticsScreen active when switching tabs
+class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
 
   @override
+  State<StatisticsScreen> createState() => _StatisticsScreenState();
+}
+
+class _StatisticsScreenState extends State<StatisticsScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Statistics')),
-      body: Consumer<CounterModel>(
-        builder: (context, count, child) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Red Taps: ${count.redCount}',
-                  style: TextStyle(fontSize: 24),
-                ),
-                Text(
-                  'Blue Taps: ${count.blueCount}',
-                  style: TextStyle(fontSize: 24),
-                ),
-              ],
-            ),
-          );
-        },
+    super.build(context);
+    print("StatisticsScreen Built Once");
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Selector<CounterModel, int>(
+            selector: (context, counterModel) => counterModel.redCount,
+            builder: (context, redCount, child) {
+              print("Red Count");
+              return Text('Red Taps: $redCount', style: const TextStyle(fontSize: 24));
+            },
+          ),
+          Selector<CounterModel, int>(
+            selector: (context, counterModel) => counterModel.blueCount,
+            builder: (context, blueCount, child) {
+              print("Blue Count ");
+              return Text('Blue Taps: $blueCount', style: const TextStyle(fontSize: 24));
+            },
+          ),
+        ],
       ),
     );
   }

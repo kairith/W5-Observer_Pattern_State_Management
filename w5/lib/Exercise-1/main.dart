@@ -9,8 +9,8 @@ void main() {
 
   service.addListener(logger);  // ✅ MUST be added before setting preference
 
-  service.setCurrentPreference(RidePreference(name: 'Eco Mode')); 
-service.setCurrentPreference(RidePreference(name: 'Luxury Mode')); 
+  service.setCurrentPreference(RidePreference(name: 'Kairith')); 
+  service.setCurrentPreference(RidePreference(name: 'Downtown')); 
 
 }
 
