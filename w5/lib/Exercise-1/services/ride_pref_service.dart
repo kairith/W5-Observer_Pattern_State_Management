@@ -13,9 +13,11 @@ class RidePreferencesService {
 
   // Update and notify listeners about preference changes
   void setCurrentPreference(RidePreference newPreference) {
-    _currentPreference = newPreference;
-    notifyListeners();
-  }
+  print('🔄 Updating preference to: ${newPreference.name}'); // Debugging statement
+  _currentPreference = newPreference;
+  notifyListeners();
+}
+
 
   // Add a listener
   void addListener(RidePreferencesListener listener) {
@@ -30,9 +32,15 @@ class RidePreferencesService {
   }
 
   // Notify all listeners about preference change
-  void notifyListeners() {
-    for (var listener in _listeners) {
-      listener.onPreferenceSelected(_currentPreference!);
-    }
+ void notifyListeners() {
+  if (_listeners.isEmpty) {
+    print(" No listeners found. Make sure you added a listener.");
   }
+  
+  for (var listener in _listeners) {
+    print(" Notifying listener: $listener");
+    listener.onPreferenceSelected(_currentPreference!);
+  }
+}
+
 }

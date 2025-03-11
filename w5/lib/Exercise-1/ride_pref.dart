@@ -8,4 +8,6 @@ class RidePreference {
 
   @override 
   String toString() => 'RidePreference: $name';
+
+  
 }
